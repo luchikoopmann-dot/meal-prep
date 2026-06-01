@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meal Prep — Lu & Maria</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --green:#3A5A40;--green-light:#A3B899;--green-pale:#EDF2EC;--green-mid:#C8D9C5;
+  --cream:#F7F5F0;--text:#1C2B1E;--text-muted:#6B7E6D;--border:#D4DDD2;--white:#FFFFFF;
+  --orange:#C96B2E;--orange-pale:#FAF0E8;--blue-pale:#EAF1F8;--blue:#2A5478;
+  --red-pale:#FAECEC;--red:#7A2828;--purple-pale:#EEEDFE;--purple:#3C3489;
+  --yellow-pale:#FFF8E1;--yellow:#7B5E00;
+  --radius:12px;--radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--text);min-height:100vh;}
+header{background:var(--green);padding:20px 20px 16px;position:sticky;top:0;z-index:50;}
+.header-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
+.logo{font-family:'DM Serif Display',serif;font-size:22px;color:var(--cream);}
+.logo span{color:var(--green-light);font-style:italic;}
+.hdr-count{font-size:12px;color:var(--green-light);background:rgba(255,255,255,0.1);padding:4px 10px;border-radius:100px;}
+.tabs{display:flex;gap:4px;}
+.tab{flex:1;padding:8px 4px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:rgba(255,255,255,0.1);color:var(--green-light);border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+.tab.active{background:var(--cream);color:var(--green);}
+main{padding:20px 16px 80px;max-width:560px;margin:0 auto;}
+.section{display:none;}.section.active{display:block;}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+.recipe-name{font-family:'DM Serif Display',serif;font-size:16px;line-height:1.3;}
+.recipe-header{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;}
+.tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:7px;}
+.tag{font-size:11px;font-weight:500;padding:2px 9px;border-radius:100px;}
+.tag-pollo{background:#FEF3E2;color:#7A4A10;}.tag-pescado{background:var(--blue-pale);color:var(--blue);}
+.tag-carne{background:var(--red-pale);color:var(--red);}.tag-vegetal{background:var(--green-pale);color:var(--green);}
+.tag-time{background:var(--cream);color:var(--text-muted);}.tag-luli{background:var(--purple-pale);color:var(--purple);}
+.tag-hidrato{background:var(--yellow-pale);color:var(--yellow);}
+.tag-molde{background:#F0EAFB;color:#5B3C8A;}.tag-salteado{background:#FBF0EA;color:#8A5B3C;}
+.macros{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px;}
+.macro{font-size:11px;padding:3px 8px;border-radius:var(--radius-sm);border:1px solid var(--border);color:var(--text-muted);background:var(--cream);}
+.ingredients-preview{margin-top:9px;font-size:13px;color:var(--text-muted);line-height:1.6;}
+.notes{margin-top:7px;font-size:12px;color:var(--text-muted);font-style:italic;}
+.btn{padding:8px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:13px;font-weight:500;color:var(--text);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.btn:hover{background:var(--green-pale);}
+.btn-primary{background:var(--green);color:var(--white);border-color:var(--green);}
+.btn-primary:hover{background:#2C4430;}
+.btn-danger{color:var(--red);border-color:#E8CACA;}
+.btn-danger:hover{background:var(--red-pale);}
+.btn-sm{padding:5px 11px;font-size:12px;}
+.top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.top-bar-label{font-size:13px;color:var(--text-muted);}
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.filter-btn{padding:5px 14px;border-radius:100px;border:1px solid var(--border);background:var(--white);cursor:pointer;font-size:12px;font-weight:500;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.15s;}
+.filter-btn.active{background:var(--green);color:var(--white);border-color:var(--green);}
+.intro-banner{background:var(--green-pale);border:1px solid var(--green-mid);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;margin-bottom:16px;line-height:1.5;color:var(--text);}
+.plan-actions{display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;}
+.cook-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:0;margin-bottom:12px;overflow:hidden;cursor:pointer;transition:all 0.15s;}
+.cook-card:hover{box-shadow:0 3px 14px rgba(58,90,64,0.1);}
+.cook-card-order{background:var(--green);color:var(--white);font-size:11px;font-weight:600;padding:5px 14px;display:flex;justify-content:space-between;align-items:center;}
+.cook-card-body{padding:12px 16px;}
+.cook-name{font-family:'DM Serif Display',serif;font-size:17px;line-height:1.25;margin-bottom:4px;}
+.cook-yield{font-size:13px;color:var(--green);font-weight:600;margin-bottom:8px;}
+.cook-tags{display:flex;gap:5px;flex-wrap:wrap;}
+.cook-tap{font-size:11px;color:var(--text-muted);margin-top:8px;}
+.sunday-label{font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin:18px 0 10px;}
+.shopping-category{font-size:10px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.08em;margin:16px 0 6px;padding-bottom:4px;border-bottom:1px solid var(--border);}
+.shopping-item{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--green-pale);font-size:14px;}
+.shopping-item:last-child{border-bottom:none;}
+.shopping-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--green);flex-shrink:0;cursor:pointer;}
+.shopping-item.checked{opacity:0.45;}
+.shopping-item.checked span{text-decoration:line-through;}
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);font-size:14px;line-height:1.6;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(28,43,30,0.45);z-index:200;align-items:flex-start;justify-content:center;padding:20px 12px;overflow-y:auto;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--white);border-radius:var(--radius);padding:20px;width:100%;max-width:480px;margin:auto;}
+.modal-title{font-family:'DM Serif Display',serif;font-size:20px;margin-bottom:16px;}
+.modal-footer{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+.form-label{font-size:12px;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.04em;display:block;margin-bottom:5px;margin-top:14px;}
+.form-label:first-child{margin-top:0;}
+input[type=text],input[type=number],textarea,select{width:100%;padding:9px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;background:var(--cream);color:var(--text);font-family:'DM Sans',sans-serif;}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--green);background:var(--white);}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.alert{padding:10px 14px;border-radius:var(--radius-sm);font-size:13px;margin-bottom:12px;font-weight:500;}
+.alert-success{background:var(--green-pale);color:var(--green);}
+.alert-info{background:var(--blue-pale);color:var(--blue);}
+ul.ing-list{list-style:none;font-size:14px;line-height:1.9;}
+ul.ing-list li{padding-left:18px;position:relative;}
+ul.ing-list li::before{content:'•';position:absolute;left:4px;color:var(--green);}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-top">
+    <div class="logo">Meal Prep <span>/ Lu & Maria</span></div>
+    <div class="hdr-count" id="hdr-count">— recetas</div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('domingo',this)">🍳 Domingo</button>
+    <button class="tab" onclick="showTab('compras',this)">🛒 Compras</button>
+    <button class="tab" onclick="showTab('recetas',this)">📋 Recetas</button>
+  </div>
+</header>
+<main>
+<div id="tab-domingo" class="section active">
+  <div id="alert-domingo"></div>
+  <div class="intro-banner">🗓 <strong>Tu domingo de cocina.</strong> Apretá el botón y te armo qué cocinar para cubrir las 14 comidas de la semana, con variedad de proteínas y el hidrato equilibrado. Cociná todo de una vez.</div>
+  <div class="plan-actions">
+    <button class="btn btn-primary" onclick="generarDomingo()">🔀 Armar mi semana</button>
+    <button class="btn btn-danger" onclick="limpiarPlan()">🗑 Limpiar</button>
+  </div>
+  <div id="domingo-container"></div>
+</div>
+<div id="tab-compras" class="section">
+  <div class="top-bar"><span class="top-bar-label" id="compras-label">Lista de compras</span><button class="btn btn-sm" onclick="clearChecked()">Desmarcar todo</button></div>
+  <div id="compras-list"></div>
+</div>
+<div id="tab-recetas" class="section">
+  <div id="alert-recetas"></div>
+  <div class="top-bar"><span class="top-bar-label" id="recipe-count-label"></span><button class="btn btn-primary btn-sm" onclick="openAdd()">+ Agregar</button></div>
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="setFilter('todas',this)">Todas</button>
+    <button class="filter-btn" onclick="setFilter('pollo',this)">🐔 Pollo</button>
+    <button class="filter-btn" onclick="setFilter('pescado',this)">🐟 Pescado</button>
+    <button class="filter-btn" onclick="setFilter('carne',this)">🥩 Carne</button>
+    <button class="filter-btn" onclick="setFilter('vegetal',this)">🥦 Vegetal</button>
+  </div>
+  <div id="recipe-list"></div>
+</div>
+</main>
+<div class="modal-overlay" id="modal-receta"><div class="modal"><div id="modal-receta-content"></div><div class="modal-footer"><button class="btn btn-primary" onclick="closeModalReceta()">Cerrar</button></div></div></div>
+<div class="modal-overlay" id="modal-add"><div class="modal">
+  <div class="modal-title" id="modal-title-text">Nueva receta</div>
+  <label class="form-label">Nombre</label>
+  <input type="text" id="r-name" placeholder="Ej: Pollo con verduras">
+  <div class="form-row" style="margin-top:14px">
+    <div><label class="form-label" style="margin-top:0">Proteína</label><select id="r-label"><option value="pollo">🐔 Pollo</option><option value="pescado">🐟 Pescado</option><option value="carne">🥩 Carne</option><option value="vegetal">🥦 Vegetal</option></select></div>
+    <div><label class="form-label" style="margin-top:0">Tipo</label><select id="r-tipo"><option value="salteado">Salteado (por porción)</option><option value="molde">Molde (rinde varias)</option></select></div>
+  </div>
+  <div class="form-row">
+    <div><label class="form-label">Rinde (si es molde)</label><input type="number" id="r-rinde" placeholder="2"></div>
+    <div><label class="form-label">Tiempo (min)</label><input type="number" id="r-time" placeholder="30"></div>
+  </div>
+  <label class="form-label">¿Lleva hidrato?</label>
+  <select id="r-hidrato-tiene"><option value="no">No</option><option value="si">Sí</option></select>
+  <label class="form-label">Ingredientes (uno por línea, con cantidad)</label>
+  <textarea id="r-ingredients" rows="6" placeholder="120g pechuga de pollo&#10;200g espinaca&#10;40g arroz integral&#10;..."></textarea>
+  <label class="form-label">Cómo se hace / notas</label>
+  <input type="text" id="r-notes" placeholder="Instrucciones, conservación...">
+  <div class="modal-footer"><button class="btn" onclick="closeModal()">Cancelar</button><button class="btn btn-primary" onclick="saveRecipe()">Guardar</button></div>
+</div></div>
+<script>
+const COMIDAS_SEMANA=14;
+const SK_R='mp-final-r-v1',SK_P='mp-final-p-v1',SK_PREV='mp-final-prev-v1',SK_C='mp-final-c-v1';
+const CONSERVA={pescado:'2-3 días en heladera · comer al inicio de semana',pollo:'3-4 días en heladera o freezar',carne:'3-4 días en heladera o freezar',vegetal:'4-5 días en heladera · también freezan bien'};
+const ORDEN_PRIORIDAD={pescado:1,pollo:2,carne:2,vegetal:3};
+const DEFAULT=[
+  {id:'r1',name:'Soufflé de atún y verduras',label:'pescado',tipo:'molde',rinde:2,hidrato:true,time:30,luli:false,verduraPorcion:200,ingredients:['120g atún al natural en lata (escurrido)','1 huevo','50g ricota magra','100g espinaca','80g zapallo rallado','80g zanahoria rallada','50g cebolla','50g morrón','30g avena','Sal, pimienta, orégano, nuez moscada (a gusto)'],notes:'Mezclar todo, molde 15-18cm, horno 185°C 25-30 min.'},
+  {id:'r2',name:'Tarta de verduras',label:'vegetal',tipo:'molde',rinde:2,hidrato:true,time:45,luli:false,verduraPorcion:200,ingredients:['3 huevos','100g ricota magra','150g zapallo cocido','150g espinaca cocida y escurrida','100g zanahoria rallada','1 tapa de tarta integral (o 40g avena sin masa)','50g queso fresco','Sal, pimienta, nuez moscada, orégano (a gusto)','Rocío vegetal'],notes:'Mezclar relleno, hornear 30-35 min a 180°C.'},
+  {id:'r3',name:'Tarta de atún con morrones',label:'pescado',tipo:'molde',rinde:3,hidrato:true,time:45,luli:true,verduraPorcion:200,ingredients:['200g atún en escabeche (escurrido)','2 huevos','300g cebolla en cuartos','150g morrón rojo','150g morrón verde','200g tomate triturado en conserva','50g aceite de oliva','1 cdita azúcar','1 tapa de tarta integral','Sal (a gusto)'],notes:'Sofreír cebolla y morrones, agregar tomate y atún, rellenar la tapa. Horno 180°C 30 min.'},
+  {id:'r4',name:'Budín de brócoli y zanahoria',label:'vegetal',tipo:'molde',rinde:3,hidrato:true,time:45,luli:false,verduraPorcion:200,ingredients:['5 huevos','300g ramilletes de brócoli','150g zanahoria en trozos','150g cebolla en cuartos','40g aceite de oliva','200g ricota magra','50ml leche descremada','60g queso parmesano rallado','120g mozzarella rallada','3 cdas copos de avena','Sal, pimienta molida (a gusto)'],notes:'Cocinar verduras al vapor, procesar con el resto. Horno 180°C 40 min.'},
+  {id:'r5',name:'Budín de espinaca y tomates cherry',label:'vegetal',tipo:'molde',rinde:2,hidrato:true,time:40,luli:false,verduraPorcion:225,ingredients:['3 huevos','80g ricota magra','30g avena','300g espinaca escurrida y picada','150g tomates cherry','50g queso fresco rallado','Sal, pimienta, nuez moscada, orégano (a gusto)','Rocío vegetal'],notes:'Exprimir bien la espinaca. Horno 185°C 30-35 min.'},
+  {id:'r6',name:'Terrina de zapallo y remolacha',label:'vegetal',tipo:'molde',rinde:2,hidrato:true,time:50,luli:false,verduraPorcion:250,ingredients:['3 huevos','100g ricota magra','30g avena','300g zapallo cocido','200g remolacha cocida rallada','Sal, comino, pimienta, ajo en polvo (a gusto)','Rocío vegetal'],notes:'Cocinar zapallo y remolacha por separado. Horno 180°C 40 min.'},
+  {id:'r7',name:'Pascualina de espinaca',label:'vegetal',tipo:'molde',rinde:2,hidrato:true,time:40,luli:false,verduraPorcion:250,ingredients:['2 tapas de pascualina','3 huevos','100g ricota magra','400g espinaca cocida y bien escurrida','1 cebolla mediana','50g queso fresco rallado','Sal, pimienta, nuez moscada (a gusto)','Rocío vegetal'],notes:'Espinaca muy bien escurrida. Horno 180°C 35-40 min.'},
+  {id:'r8',name:'Cazuela de pollo y vegetales',label:'pollo',tipo:'molde',rinde:3,hidrato:true,time:45,luli:false,verduraPorcion:185,ingredients:['360g pollo (pechuga o muslo sin piel)','200g zanahoria','200g apio','150g cebolla','200g batata','500ml caldo de pollo sin sal','Laurel, tomillo, ajo, pimienta (a gusto)','Rocío vegetal'],notes:'Cocción lenta 35-40 min. Ideal para freezar.'},
+  {id:'r9',name:'Tallarines de zucchini con hongos y pollo',label:'pollo',tipo:'salteado',rinde:1,hidrato:false,time:30,luli:false,verduraPorcion:250,ingredients:['120g pechuga de pollo','170g zucchini espiralizado','80g champiñones laminados','1 cda ricota magra','1 cdita salsa de soja baja en sodio','Rocío vegetal','Sal, pimienta, ajo en polvo, orégano (a gusto)'],notes:'Saltear zucchini máx 2 min. Ricota fuera del fuego.'},
+  {id:'r10',name:'Pollo con cherry y espinaca',label:'pollo',tipo:'salteado',rinde:1,hidrato:false,time:30,luli:false,verduraPorcion:200,ingredients:['120g pechuga de pollo','100g tomates cherry','100g espinaca fresca baby','¼ palta','30ml leche descremada','Sal, pimienta, ajo en polvo, orégano (a gusto)'],notes:'Palta: máx ½ por día entre las dos comidas.'},
+  {id:'r11',name:'Tacos de pollo con lechuga y morrón',label:'pollo',tipo:'salteado',rinde:1,hidrato:true,time:25,luli:false,verduraPorcion:200,ingredients:['120g pechuga desmenuzada','100g morrón','60g lechuga','40g tomate','2 tortillas integrales pequeñas','Limón, ajo en polvo, comino, pimentón (a gusto)','Rocío vegetal'],notes:'Tortillas = hidrato del día.'},
+  {id:'r12',name:'Tacos de carne con repollo',label:'carne',tipo:'salteado',rinde:1,hidrato:true,time:30,luli:false,verduraPorcion:200,ingredients:['120g lomo o nalga magra','120g repollo morado rallado','50g tomate','30g cebolla morada','2 tortillas integrales pequeñas','Limón, comino, pimentón ahumado, ajo (a gusto)','Rocío vegetal'],notes:'Repollo crudo = mucha fibra.'},
+  {id:'r13',name:'Verduras al horno con pollo',label:'pollo',tipo:'salteado',rinde:1,hidrato:true,time:40,luli:false,verduraPorcion:250,ingredients:['120g pechuga de pollo','100g berenjena','75g calabaza','75g brócoli','100g batata','Romero, tomillo, ajo, pimentón ahumado (a gusto)','1 cdita aceite de oliva'],notes:'Asadera 200°C 30-35 min. Batata = hidrato.'},
+  {id:'r14',name:'Bowl de salmón con quinoa y espárragos',label:'pescado',tipo:'salteado',rinde:1,hidrato:true,time:30,luli:false,verduraPorcion:200,ingredients:['120g salmón','40g quinoa','120g espárragos','80g pepino','Rúcula fresca','Limón, sal, pimienta, eneldo (a gusto)','Rocío vegetal'],notes:'Salmón al horno 180°C 12-15 min. Quinoa = hidrato.'},
+  {id:'r15',name:'Salmón con coliflor y brócoli al horno',label:'pescado',tipo:'salteado',rinde:1,hidrato:false,time:35,luli:false,verduraPorcion:225,ingredients:['120g salmón','125g coliflor','100g brócoli','Limón, ajo en polvo, cúrcuma, pimentón ahumado (a gusto)','Sal, pimienta (a gusto)','Rocío vegetal'],notes:'Misma asadera 200°C, salmón los últimos 12 min.'},
+  {id:'r16',name:'Merluza con ratatouille',label:'pescado',tipo:'salteado',rinde:1,hidrato:false,time:30,luli:false,verduraPorcion:250,ingredients:['120g filete de merluza','75g berenjena','75g zucchini','50g morrón rojo','50g tomate','Albahaca, ajo, sal, pimienta (a gusto)','Rocío vegetal'],notes:'Escurrir berenjena con sal antes.'},
+  {id:'r17',name:'Bifecitos de pollo con arroz y ensalada',label:'pollo',tipo:'salteado',rinde:1,hidrato:true,time:25,luli:true,verduraPorcion:200,ingredients:['120g pechuga en bifes finos','40g arroz yamani o integral','75g lechuga','50g tomate','50g pepino','25g zanahoria','Limón, sal, pimienta, ajo en polvo, orégano (a gusto)','Rocío vegetal'],notes:'Arroz = hidrato del día.'},
+  {id:'r18',name:'Bifecitos de carne con arroz y ensalada',label:'carne',tipo:'salteado',rinde:1,hidrato:true,time:25,luli:true,verduraPorcion:200,ingredients:['120g lomo o nalga en bifes','40g arroz yamani o integral','75g lechuga','50g tomate','50g pepino','25g rúcula','Limón, sal, pimienta (a gusto)','Rocío vegetal'],notes:'Arroz = hidrato del día.'},
+  {id:'r19',name:'Fideos integrales con brócoli y pollo',label:'pollo',tipo:'salteado',rinde:1,hidrato:true,time:25,luli:true,verduraPorcion:250,ingredients:['120g pechuga de pollo','40g fideos integrales','250g brócoli','Ajo, sal, pimienta, orégano (a gusto)','Rocío vegetal'],notes:'Brócoli al dente. Fideos = hidrato.'},
+  {id:'r20',name:'Omelette con choclo y queso',label:'vegetal',tipo:'salteado',rinde:1,hidrato:true,time:15,luli:true,verduraPorcion:200,ingredients:['2 huevos','40g choclo en grano','1 feta queso port salut light','100g tomate','60g lechuga','40g rúcula','Sal, pimienta (a gusto)','Rocío vegetal'],notes:'Choclo = hidrato del día.'},
+  {id:'r21',name:'Milanesa de pollo al horno con ensalada',label:'pollo',tipo:'salteado',rinde:1,hidrato:false,time:30,luli:true,verduraPorcion:250,ingredients:['120g pechuga de pollo','1 huevo (para rebozar)','25g pan rallado integral','75g rúcula','75g tomate','50g zanahoria','50g morrón','Limón, sal, ajo en polvo, orégano, pimentón (a gusto)','Rocío vegetal'],notes:'Horno 200°C 20-25 min, no frita.'},
+  {id:'r22',name:'Wok de pollo con quinoa y verduritas',label:'pollo',tipo:'salteado',rinde:1,hidrato:true,time:25,luli:true,verduraPorcion:200,ingredients:['120g pechuga de pollo','40g quinoa','60g morrón rojo','60g zanahoria','50g brotes de soja','30g cebolla','1 cdita salsa de soja baja en sodio','Jengibre, ajo (a gusto)','Rocío vegetal'],notes:'Fuego alto. Quinoa = hidrato del día.'},
+];
+let recipes=[],plan=null,prevIds=[],checked={},activeFilter='todas',editingId=null;
+function lsGet(k,d){try{const v=localStorage.getItem(k);return v?JSON.parse(v):d;}catch{return d;}}
+function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch{}}
+function load(){recipes=lsGet(SK_R,DEFAULT);plan=lsGet(SK_P,null);prevIds=lsGet(SK_PREV,[]);checked=lsGet(SK_C,{});render();}
+function save(){lsSet(SK_R,recipes);lsSet(SK_P,plan);lsSet(SK_PREV,prevIds);lsSet(SK_C,checked);}
+function uid(){return 'r'+Date.now()+Math.random().toString(36).slice(2,5);}
+function showTab(n,btn){document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));btn.classList.add('active');document.getElementById('tab-'+n).classList.add('active');render();}
+function setFilter(f,btn){activeFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderRecipes();}
+function tagColor(l){return l==='pollo'?'tag-pollo':l==='pescado'?'tag-pescado':l==='carne'?'tag-carne':'tag-vegetal';}
+function render(){renderRecipes();renderDomingo();renderCompras();}
+function generarDomingo(){
+  if(recipes.length<4){showAlert('domingo','Necesitás al menos 4 recetas.','info');return;}
+  const noRep=recipes.filter(r=>!prevIds.includes(r.id));
+  const pool=noRep.length>=8?noRep:recipes;
+  const porProt={pescado:[],pollo:[],carne:[],vegetal:[]};
+  pool.forEach(r=>{if(porProt[r.label])porProt[r.label].push(r);});
+  Object.keys(porProt).forEach(k=>porProt[k].sort(()=>Math.random()-0.5));
+
+  // Elegir 1 receta por proteína (máx 4). Garantizar mezcla de hidrato:
+  // al menos 1 con hidrato y al menos 1 sin hidrato entre las elegidas.
+  const elegidas=[];
+  let conH=0,sinH=0;
+  const ordenProt=['pescado','vegetal','carne','pollo'].sort(()=>Math.random()-0.5);
+  ordenProt.forEach((p,i)=>{
+    if(elegidas.length>=4||!porProt[p]||!porProt[p].length)return;
+    const quedan=4-elegidas.length;
+    // forzar balance: si es la última y no hay ninguna sin hidrato, buscar sin hidrato
+    let preferSinH;
+    if(sinH===0&&quedan<=2) preferSinH=true;
+    else if(conH===0&&quedan<=2) preferSinH=false;
+    else preferSinH=conH>sinH;
+    let pick=porProt[p].find(r=>r.hidrato===!preferSinH&&!elegidas.find(e=>e.id===r.id));
+    if(!pick) pick=porProt[p].find(r=>!elegidas.find(e=>e.id===r.id));
+    if(pick){elegidas.push(pick);if(pick.hidrato)conH++;else sinH++;}
+  });
+  if(elegidas.length<4){const resto=pool.filter(r=>!elegidas.find(e=>e.id===r.id)).sort(()=>Math.random()-0.5);while(elegidas.length<4&&resto.length)elegidas.push(resto.shift());}
+
+  const items=[];let cubiertas=0,conHidrato=0;
+  const moldes=elegidas.filter(r=>r.tipo==='molde');
+  const salteados=elegidas.filter(r=>r.tipo==='salteado');
+
+  // Moldes aportan su rendimiento fijo
+  moldes.forEach(r=>{if(cubiertas>=COMIDAS_SEMANA)return;const porc=Math.min(r.rinde,COMIDAS_SEMANA-cubiertas);items.push({id:r.id,porciones:porc});cubiertas+=porc;if(r.hidrato)conHidrato+=porc;});
+
+  // Salteados completan, repartiendo PAREJO con tope de 4 porciones por receta
+  if(salteados.length){
+    salteados.forEach(r=>{if(cubiertas<COMIDAS_SEMANA){items.push({id:r.id,porciones:0});}});
+    const TOPE=4;
+    let intentos=0;
+    while(cubiertas<COMIDAS_SEMANA){
+      const necesitaH=conHidrato<COMIDAS_SEMANA/2;
+      // candidatos que ayudan al balance Y no superaron el tope
+      let cand=salteados.filter(r=>{const it=items.find(i=>i.id===r.id);return r.hidrato===necesitaH&&it&&it.porciones<TOPE;});
+      if(!cand.length) cand=salteados.filter(r=>{const it=items.find(i=>i.id===r.id);return it&&it.porciones<TOPE;});
+      if(!cand.length) cand=salteados; // todos al tope: permitir pasar (raro)
+      cand.sort((a,b)=>{const ia=items.find(it=>it.id===a.id),ib=items.find(it=>it.id===b.id);return (ia?ia.porciones:0)-(ib?ib.porciones:0);});
+      const r=cand[0];
+      const it=items.find(i=>i.id===r.id);
+      it.porciones++;cubiertas++;if(r.hidrato)conHidrato++;
+      intentos++;if(intentos>80)break;
+    }
+  }
+  // Si solo moldes y faltan, repetir preparación del último molde
+  if(cubiertas<COMIDAS_SEMANA&&moldes.length){const r=moldes[moldes.length-1];const it=items.find(i=>i.id===r.id);while(cubiertas<COMIDAS_SEMANA&&it){it.porciones+=r.rinde;cubiertas+=r.rinde;if(r.hidrato)conHidrato+=r.rinde;}}
+
+  // Sacar items con 0 porciones
+  const itemsFinal=items.filter(it=>it.porciones>0);
+  itemsFinal.sort((a,b)=>{const ra=recipes.find(r=>r.id===a.id),rb=recipes.find(r=>r.id===b.id);return (ORDEN_PRIORIDAD[ra.label]||9)-(ORDEN_PRIORIDAD[rb.label]||9);});
+  prevIds=elegidas.map(r=>r.id);
+  plan={items:itemsFinal,conHidrato,total:cubiertas};
+  checked={};save();render();
+  showAlert('domingo','¡Listo! Cociná esto el domingo y tenés la semana resuelta.','success');
+}
+function limpiarPlan(){plan=null;save();renderDomingo();renderCompras();}
+function renderDomingo(){
+  const c=document.getElementById('domingo-container');
+  if(!plan||!plan.items||!plan.items.length){c.innerHTML='<div class="empty-state">🍳<br><br>Apretá <strong>Armar mi semana</strong> y te digo qué cocinar el domingo para tener los 7 días resueltos.</div>';return;}
+  const sinH=plan.total-plan.conHidrato;
+  let html='<div class="sunday-label">Cociná en este orden (primero lo que dura menos)</div>';
+  plan.items.forEach((it,i)=>{
+    const r=recipes.find(x=>x.id===it.id);if(!r)return;
+    const esMolde=r.tipo==='molde';
+    const yieldTxt=esMolde?(it.porciones>r.rinde?'Hacé '+Math.ceil(it.porciones/r.rinde)+' preparaciones → '+it.porciones+' comidas':'Hacé 1 preparación → '+it.porciones+(it.porciones===1?' comida':' comidas')):'Cociná '+it.porciones+(it.porciones===1?' porción':' porciones');
+    html+='<div class="cook-card" onclick="openRecetaDomingo(\''+r.id+'\','+it.porciones+')"><div class="cook-card-order"><span>PASO '+(i+1)+'</span><span>'+CONSERVA[r.label].split('·')[0].trim()+'</span></div><div class="cook-card-body"><div class="cook-name">'+r.name+'</div><div class="cook-yield">🍽 '+yieldTxt+'</div><div class="cook-tags"><span class="tag '+tagColor(r.label)+'">'+r.label+'</span><span class="tag '+(esMolde?'tag-molde':'tag-salteado')+'">'+(esMolde?'molde':'salteado')+'</span>'+(r.hidrato?'<span class="tag tag-hidrato">🌾 con hidrato</span>':'<span class="tag tag-vegetal">sin hidrato</span>')+'</div><div class="cook-tap">👆 tocá para ver ingredientes y cómo hacerla</div></div></div>';
+  });
+  html+='<div class="intro-banner" style="margin-top:16px;background:var(--blue-pale);border-color:#CADEF0;color:var(--blue)">✅ <strong>'+plan.total+' comidas</strong> cubiertas · '+plan.conHidrato+' con hidrato / '+sinH+' sin hidrato.<br>El hidrato va en una sola comida por día: combiná una con hidrato + una sin, cada día.</div><button class="btn btn-primary" style="width:100%;margin-top:8px" onclick="document.querySelectorAll(\'.tab\')[1].click()">🛒 Ver lista de compras</button>';
+  c.innerHTML=html;
+}
+function parseIng(ing){
+  const s=ing.trim();
+  if(isCondimentoLine(s))return {qty:null,unit:null,base:s,condimento:true};
+  const mG=s.match(/^(\d+(?:[.,]\d+)?)\s*(g|kg|ml|l)\s+(.+)$/i);
+  if(mG){let q=parseFloat(mG[1].replace(',','.'));let u=mG[2].toLowerCase();let b=mG[3].replace(/\(.*?\)/g,'').trim().toLowerCase();if(u==='kg'){q*=1000;u='g';}if(u==='l'){q*=1000;u='ml';}return {qty:q,unit:u,base:b};}
+  const mF=s.match(/^¼\s+(.+)$/);if(mF)return {qty:0.25,unit:'unidad',base:mF[1].replace(/\(.*?\)/g,'').trim().toLowerCase()};
+  const mS=s.match(/^(\d+(?:[.,]\d+)?)\s*(cdas?|cditas?)\s+(.+)$/i);if(mS)return {qty:parseFloat(mS[1]),unit:mS[2].toLowerCase(),base:mS[3].replace(/\(.*?\)/g,'').trim().toLowerCase()};
+  const mC=s.match(/^(\d+(?:[.,]\d+)?)\s+(.+)$/);if(mC){const q=parseFloat(mC[1].replace(',','.'));let b=mC[2].replace(/\(.*?\)/g,'').replace(/\s*(grande|mediano|mediana|chico|chica|pequeño|pequeña)s?\b/gi,'').trim().toLowerCase();return {qty:q,unit:'unidad',base:b};}
+  return {qty:null,unit:null,base:s.replace(/\(.*?\)/g,'').trim().toLowerCase()};
+}
+function isCondimentoLine(s){return /\(a gusto\)/i.test(s)||/\(opcional\)/i.test(s)||/^rocío/i.test(s)||/^sal[,\s]/i.test(s)||/^pimienta/i.test(s)||/^limón/i.test(s)||/jengibre, ajo/i.test(s)||/^ajo,/i.test(s)||/^albahaca/i.test(s)||/^romero/i.test(s)||/^laurel/i.test(s);}
+function extractCondimentos(line){const c=line.replace(/\(a gusto\)/gi,'').replace(/\(opcional\)/gi,'').replace(/\(.*?\)/g,'').trim();return c.split(/[,\/]/).map(s=>s.trim().toLowerCase()).filter(s=>s.length>1);}
+function formatQty(q,u,b){if(u==='g'){if(q>=1000)return (q/1000).toFixed(1).replace('.0','')+'kg '+b;return Math.round(q)+'g '+b;}if(u==='ml'){if(q>=1000)return (q/1000).toFixed(1).replace('.0','')+'L '+b;return Math.round(q)+'ml '+b;}if(u==='unidad'){return Math.ceil(q)+' '+b;}if(u)return q+' '+u+' '+b;return b;}
+function openRecetaDomingo(id,porciones){
+  const r=recipes.find(x=>x.id===id);if(!r)return;
+  let mult=r.tipo==='molde'?(porciones/r.rinde):porciones;
+  const ings=r.ingredients.map(ing=>{if(isCondimentoLine(ing))return '<li style="color:var(--text-muted)">'+ing+'</li>';const p=parseIng(ing);if(p.qty!=null&&mult!==1){return '<li><strong>'+formatQty(p.qty*mult,p.unit,p.base)+'</strong></li>';}return '<li>'+ing+'</li>';}).join('');
+  const esMolde=r.tipo==='molde';
+  const cantTxt=esMolde?(mult>1?'Hacé '+Math.ceil(mult)+' preparaciones (ingredientes ya multiplicados) → '+porciones+' comidas':'1 preparación → '+porciones+(porciones===1?' comida':' comidas')):'Cociná '+porciones+(porciones===1?' porción':' porciones')+' (ingredientes ya multiplicados ×'+porciones+')';
+  document.getElementById('modal-receta-content').innerHTML='<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:4px"><div style="font-family:\'DM Serif Display\',serif;font-size:20px;line-height:1.3">'+r.name+'</div><span class="tag '+tagColor(r.label)+'" style="flex-shrink:0;margin-top:4px">'+r.label+'</span></div><div style="font-size:13px;color:var(--green);font-weight:600;margin-bottom:14px">🍽 '+cantTxt+'</div><div style="background:var(--yellow-pale);color:var(--yellow);border-radius:var(--radius-sm);padding:8px 12px;font-size:12px;margin-bottom:16px">🧊 Conservación: '+CONSERVA[r.label]+'</div><div style="font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Ingredientes'+(mult!==1?' (para '+porciones+' comidas)':'')+'</div><ul class="ing-list">'+ings+'</ul><div style="margin-top:16px;font-size:11px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px">Cómo se hace</div><div style="font-size:14px;line-height:1.6">'+(r.notes||'—')+'</div><div style="margin-top:14px;display:flex;gap:6px;flex-wrap:wrap"><span class="macro">🥦 ~'+r.verduraPorcion+'g verdura/porción</span><span class="macro">'+(r.hidrato?'🌾 con hidrato':'sin hidrato')+'</span></div>';
+  document.getElementById('modal-receta').classList.add('open');
+}
+function closeModalReceta(){document.getElementById('modal-receta').classList.remove('open');}
+function renderCompras(){
+  if(!plan||!plan.items||!plan.items.length){document.getElementById('compras-label').textContent='Generá tu semana para ver la lista';document.getElementById('compras-list').innerHTML='<div class="empty-state">🛒<br><br>Primero armá tu semana en la pestaña Domingo.</div>';return;}
+  const ingMap={};const condimentos=new Map();
+  plan.items.forEach(it=>{const r=recipes.find(x=>x.id===it.id);if(!r)return;const mult=r.tipo==='molde'?(it.porciones/r.rinde):it.porciones;r.ingredients.forEach(ing=>{if(isCondimentoLine(ing)){extractCondimentos(ing).forEach(c=>{const k=c.toLowerCase().trim();if(k.length>1&&!condimentos.has(k))condimentos.set(k,c);});return;}const p=parseIng(ing);const key=p.base.toLowerCase().replace(/\s+/g,' ').trim();if(!ingMap[key])ingMap[key]={parsed:p,total:p.qty!=null?p.qty*mult:null};else if(ingMap[key].total!=null&&p.qty!=null)ingMap[key].total+=p.qty*mult;});});
+  const cats={proteinas:[],verduras:[],hidratos:[],lacteos:[],condimentos:[],otros:[]};
+  const protKw=['pollo','salmón','merluza','atún','carne','lomo','nalga','pechuga','huevo','tofu'];
+  const verdKw=['espinaca','brócoli','zapallo','zanahoria','cherry','tomate','berenjena','zucchini','morrón','cebolla','apio','repollo','rúcula','lechuga','champiñón','seta','brote','espárrago','pepino','coliflor','remolacha','batata','choclo','palta','calabaza'];
+  const hidroKw=['arroz','quinoa','avena','tortilla','maicena','fideos','tapa de tarta','tapa de pascualina','pan rallado'];
+  const lactKw=['ricota','queso','leche','mozzarella','parmesano','port salut'];
+  const otrosCondKw=['aceite','azúcar','caldo'];
+  Object.entries(ingMap).forEach(([key,v])=>{const label=v.total!=null?formatQty(v.total,v.parsed.unit,v.parsed.base):v.parsed.base;const low=key.toLowerCase();const item={label,key};if(lactKw.some(k=>low.includes(k)))cats.lacteos.push(item);else if(hidroKw.some(k=>low.includes(k)))cats.hidratos.push(item);else if(verdKw.some(k=>low.includes(k)))cats.verduras.push(item);else if(protKw.some(k=>low.includes(k)))cats.proteinas.push(item);else if(otrosCondKw.some(k=>low.includes(k)))cats.condimentos.push(item);else cats.otros.push(item);});
+  condimentos.forEach((label,key)=>cats.condimentos.push({label,key:'cond__'+key}));
+  const total=Object.values(cats).flat().length;
+  document.getElementById('compras-label').textContent=total+' cosas para comprar';
+  const catLabels={proteinas:'🥩 Proteínas',verduras:'🥦 Verduras',hidratos:'🌾 Hidratos',lacteos:'🧀 Lácteos y quesos',condimentos:'🧂 Condimentos y básicos',otros:'📦 Otros'};
+  let html='',gi=0;
+  Object.entries(cats).forEach(([cat,items])=>{if(!items.length)return;html+='<div class="shopping-category">'+catLabels[cat]+'</div>';items.forEach(item=>{const idx=gi++;const sk=item.key.replace(/\\/g,'\\\\').replace(/'/g,"\\'");html+='<div class="shopping-item '+(checked[item.key]?'checked':'')+'" id="si-'+idx+'"><input type="checkbox" '+(checked[item.key]?'checked':'')+' onchange="toggleCheck(\''+sk+'\','+idx+')"><span>'+item.label+'</span></div>';});});
+  document.getElementById('compras-list').innerHTML=html;
+}
+function toggleCheck(key,idx){checked[key]=!checked[key];const el=document.getElementById('si-'+idx);if(el){el.classList.toggle('checked',checked[key]);const cb=el.querySelector('input');if(cb)cb.checked=checked[key];}save();}
+function clearChecked(){checked={};save();renderCompras();}
+function renderRecipes(){
+  const filtered=activeFilter==='todas'?recipes:recipes.filter(r=>r.label===activeFilter);
+  document.getElementById('recipe-count-label').textContent=recipes.length+' recetas en el banco';
+  document.getElementById('hdr-count').textContent=recipes.length+' recetas';
+  if(!filtered.length){document.getElementById('recipe-list').innerHTML='<div class="empty-state">No hay recetas en esta categoría.</div>';return;}
+  document.getElementById('recipe-list').innerHTML=filtered.map(r=>'<div class="card"><div class="recipe-header"><div style="flex:1"><div class="recipe-name">'+r.name+'</div><div class="tags"><span class="tag '+tagColor(r.label)+'">'+r.label+'</span><span class="tag '+(r.tipo==='molde'?'tag-molde':'tag-salteado')+'">'+(r.tipo==='molde'?'molde · rinde '+r.rinde:'salteado')+'</span>'+(r.hidrato?'<span class="tag tag-hidrato">🌾 hidrato</span>':'')+(r.luli?'<span class="tag tag-luli">✦ Luli</span>':'')+'</div></div><div style="display:flex;gap:5px;flex-shrink:0;margin-left:8px"><button class="btn btn-sm" onclick="editRecipe(\''+r.id+'\')">✏️</button><button class="btn btn-sm btn-danger" onclick="deleteRecipe(\''+r.id+'\')">🗑</button></div></div><div class="ingredients-preview">'+r.ingredients.join(' · ')+'</div>'+(r.notes?'<div class="notes">'+r.notes+'</div>':'')+'</div>').join('');
+}
+function openAdd(){editingId=null;document.getElementById('modal-title-text').textContent='Nueva receta';['r-name','r-rinde','r-ingredients','r-notes'].forEach(id=>document.getElementById(id).value='');document.getElementById('r-time').value='';document.getElementById('r-label').value='pollo';document.getElementById('r-tipo').value='salteado';document.getElementById('r-hidrato-tiene').value='no';document.getElementById('modal-add').classList.add('open');}
+function editRecipe(id){const r=recipes.find(x=>x.id===id);if(!r)return;editingId=id;document.getElementById('modal-title-text').textContent='Editar receta';document.getElementById('r-name').value=r.name;document.getElementById('r-label').value=r.label;document.getElementById('r-tipo').value=r.tipo;document.getElementById('r-rinde').value=r.rinde||'';document.getElementById('r-time').value=r.time||'';document.getElementById('r-hidrato-tiene').value=r.hidrato?'si':'no';document.getElementById('r-ingredients').value=r.ingredients.join('\n');document.getElementById('r-notes').value=r.notes||'';document.getElementById('modal-add').classList.add('open');}
+function closeModal(){document.getElementById('modal-add').classList.remove('open');}
+function saveRecipe(){const name=document.getElementById('r-name').value.trim();const ingRaw=document.getElementById('r-ingredients').value.trim();if(!name||!ingRaw)return;const tipo=document.getElementById('r-tipo').value;const rinde=tipo==='molde'?(parseInt(document.getElementById('r-rinde').value)||2):1;const data={name,label:document.getElementById('r-label').value,tipo,rinde,verduraPorcion:200,hidrato:document.getElementById('r-hidrato-tiene').value==='si',time:parseInt(document.getElementById('r-time').value)||0,ingredients:ingRaw.split('\n').map(s=>s.trim()).filter(Boolean),notes:document.getElementById('r-notes').value.trim(),luli:false};if(editingId){const i=recipes.findIndex(r=>r.id===editingId);if(i>=0)recipes[i]={...recipes[i],...data};}else recipes.push({id:uid(),...data});closeModal();save();renderRecipes();showAlert('recetas',editingId?'Receta actualizada.':'¡Receta guardada!','success');}
+function deleteRecipe(id){if(!confirm('¿Eliminar esta receta?'))return;recipes=recipes.filter(r=>r.id!==id);save();render();}
+function showAlert(zone,msg,type){const el=document.getElementById('alert-'+zone);if(!el)return;el.innerHTML='<div class="alert alert-'+type+'">'+msg+'</div>';setTimeout(()=>{el.innerHTML='';},4000);}
+document.getElementById('modal-add').addEventListener('click',function(e){if(e.target===this)closeModal();});
+document.getElementById('modal-receta').addEventListener('click',function(e){if(e.target===this)closeModalReceta();});
+load();
+</script>
+</body>
+</html>
