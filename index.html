@@ -157,7 +157,101 @@ const PLATOS=[
   {id:'hev',nombre:'Los tres',c:['asado','ensalada','verde']}
 ];
 // Comidas por semana de cada tipo (para 14 comidas). Se reescala solo si cambiás personas, comidas o días.
-const DEFAULTS=()=>({personas:1,comidas:2,dias:7,gPlato:200,platos:{h:3,e:4,v:3,hv:2,he:1,ev:1,hev:0},fuera:false,verdeFormato:'congelado',bolsaG:400});
+const DEFAULTS=()=>({personas:1,comidas:2,dias:7,gPlato:200,platos:{h:3,e:4,v:3,hv:2,he:1,ev:1,hev:0},fuera:false,verdeFormato:'congelado',bolsaG:400,merDias:7});
+
+/* ---------- Merienda (sin cocinar) ----------
+   Estructura del plan de Luli: hidrato complejo + proteína + fibra. Filtro de candidiasis: sin azúcar,
+   sin fiambres ni ultraprocesados; la fruta va en la merienda. Pan, quesos, ricota y hummus: reducidos (a confirmar).
+   Porciones de Luli: 1 rebanada de pan, 2 cdas de avena, 1 cda de ricota, 1 yogur, 1 fruta mediana.
+   Estimadas (Luli no las indica): cherry ~100 g, hummus ~50 g y frutos rojos ~80 g por merienda. */
+const MER={
+  tostada:{nombre:'Tostada con ricota y tomate',tipo:'salada',como:'1 rebanada de pan de masa madre tostada + ricota (o queso) + tomates cherry + orégano.',ing:{pan:1,ricota:1,cherry:100,oregano:0}},
+  hummus:{nombre:'Hummus con cherry y tostada',tipo:'salada',como:'Hummus + tomates cherry para mojar + 1 tostada de masa madre (o el hummus untado arriba de la tostada).',ing:{hummus:50,cherry:100,pan:1}},
+  yogur:{nombre:'Yogur con avena y fruta',tipo:'dulce',como:'Yogur natural sin azúcar + 1 bolsita de avena + la fruta de la semana.',ing:{yogur:1,avena:2,FRUTA:1}},
+  placa:{nombre:'Yogur helado en placa',tipo:'dulce',como:'Trozos de la placa del freezer (yogur + frutos rojos + avena). Sacala 5 min antes.',ing:{yogur:1,avena:2,frutosrojos:80}},
+  manzana:{nombre:'Manzana con ricota y canela',tipo:'dulce',como:'Rodajas gruesas de manzana verde + 1 cda de ricota + canela + avena espolvoreada.',ing:{manzana:1,ricota:1,avena:2,canela:0}}
+};
+const MER_IDS=Object.keys(MER);
+const MER_N=3;
+// Fruta de la semana para el yogur (las mejor toleradas según los lineamientos de candidiasis).
+const FRUTAS={kiwi:'Kiwi',pera:'Pera',manzana:'Manzana verde',frutosrojos:'Frutos rojos'};
+const FRUTA_IDS=Object.keys(FRUTAS);
+// grp: 'merienda' = comprar · 'merienda-d' = suele estar en casa, revisar.
+const MING={
+  yogur:{n:'Yogur natural sin azúcar',grp:'merienda',u:['pote','potes'],aprox:'potes individuales',nota:'que diga "sin azúcar"'},
+  hummus:{n:'Hummus',grp:'merienda',g:true,pote:200,nota:'sin azúcar: revisá la etiqueta'},
+  cherry:{n:'Tomates cherry',grp:'merienda',g:true,paso:50},
+  frutosrojos:{n:'Frutos rojos congelados',grp:'merienda',g:true,bolsa:true,nota:'lo que sobra queda en el freezer'},
+  kiwi:{n:'Kiwi',grp:'merienda',u:['unidad','unidades']},
+  pera:{n:'Pera',grp:'merienda',u:['unidad','unidades']},
+  manzana:{n:'Manzana verde',grp:'merienda',u:['unidad','unidades']},
+  pan:{n:'Pan de masa madre',grp:'merienda-d',u:['rebanada','rebanadas'],nota:'freezado en rodajas va directo a la tostadora'},
+  ricota:{n:'Ricota',grp:'merienda-d',u:['cda','cdas']},
+  avena:{n:'Avena',grp:'merienda-d',u:['cda','cdas'],gPorU:10},
+  queso:{n:'Queso',grp:'merienda-d',fijo:'unas porciones',nota:'para el comodín'},
+  canela:{n:'Canela',grp:'merienda-d',fijo:'que haya'},
+  oregano:{n:'Orégano',grp:'merienda-d',fijo:'que haya'}
+};
+function merOk(set){return set.some(id=>MER[id].tipo==='dulce')&&set.some(id=>MER[id].tipo==='salada');}
+// 3 meriendas distintas, al menos una dulce y una salada; lo de la semana pasada pesa menos.
+function pickMerienda(avoid,rng){
+  // Si sale exactamente lo mismo que la semana pasada, se vuelve a sortear (hasta 5 veces).
+  const prevKey=avoid.slice(-MER_N).slice().sort().join();
+  let set;for(let t=0;t<5;t++){set=pickMerOnce(avoid,rng);if(set.slice().sort().join()!==prevKey)break;}
+  return set;
+}
+function pickMerOnce(avoid,rng){
+  const w=id=>avoid.includes(id)?0.35:1;
+  const pick=ids=>wpick(ids.map(id=>({id,w:w(id)})),rng).id;
+  const set=[pick(MER_IDS.filter(id=>MER[id].tipo==='salada'))];
+  set.push(pick(MER_IDS.filter(id=>MER[id].tipo==='dulce')));
+  while(set.length<MER_N)set.push(pick(MER_IDS.filter(id=>!set.includes(id))));
+  return set.sort((a,b)=>MER_IDS.indexOf(a)-MER_IDS.indexOf(b));
+}
+function rerollMerSlot(set,i,avoid,rng){
+  const rest=set.filter((_,j)=>j!==i);
+  let cand=MER_IDS.filter(id=>!set.includes(id)&&merOk(rest.concat(id)));
+  if(!cand.length)return set.slice();
+  const out=set.slice();
+  out[i]=wpick(cand.map(id=>({id,w:avoid.includes(id)?0.35:1})),rng).id;
+  return out;
+}
+function pickFruta(avoid,rng,exclude){
+  let pool=FRUTA_IDS.filter(f=>f!==exclude);
+  return wpick(pool.map(f=>({id:f,w:f===avoid?0.3:1})),rng).id;
+}
+// Cuántas meriendas de cada una: se reparten las de la semana entre las 3.
+function merServings(s){
+  const N=Math.max(0,s.merDias*s.personas),b=Math.floor(N/MER_N),r=N%MER_N;
+  return Array.from({length:MER_N},(_,i)=>b+(i<r?1:0));
+}
+function computeMerienda(s,w){
+  const sv=merServings(s),need={},order=[];
+  const add=(k,q)=>{if(!(k in need)){need[k]=0;order.push(k);}need[k]+=q;};
+  w.merienda.forEach((id,i)=>{
+    const n=sv[i];if(!n)return;
+    Object.entries(MER[id].ing).forEach(([k,q])=>{
+      if(k==='FRUTA'){if(w.fruta==='frutosrojos')add('frutosrojos',80*n);else add(w.fruta,n);}
+      else add(k,q*n);
+    });
+  });
+  // Comodín: queso en porción + pera o manzana verde. Siempre 2 frutas extra.
+  const fc=(w.fruta==='manzana'||w.fruta==='pera')?w.fruta:'pera';
+  add('queso',0);add(fc,2);
+  const items=order.map(k=>{
+    const d=MING[k],q=need[k];let texto,aprox='',nota=d.nota||'';
+    if(d.fijo)texto=d.fijo;
+    else if(d.g&&d.pote){const n=Math.max(1,Math.ceil(q/d.pote-1e-9));texto=n+(n===1?' pote':' potes');aprox='≈ '+fmtG(q)+' en la semana';}
+    else if(d.g&&d.bolsa){texto='1 bolsa';aprox='usás ≈ '+fmtG(q);}
+    else if(d.g){texto=fmtG(Math.max(d.paso,Math.ceil(q/d.paso-1e-9)*d.paso));}
+    else{texto=q+' '+(q===1?d.u[0]:d.u[1]);if(d.gPorU)aprox='≈ '+fmtG(q*d.gPorU);else if(d.aprox)aprox=d.aprox;}
+    if(k===fc&&k!=='frutosrojos')nota=(nota?nota+' · ':'')+'incluye 2 para el comodín';
+    return{id:'m_'+k,nombre:d.n,texto,aprox,nota,det:'',grupo:d.grp,gCompra:0};
+  });
+  const uses=k=>w.merienda.reduce((a,id,i)=>a+(MER[id].ing[k]!=null?sv[i]:0),0);
+  return{sv,items,bolsitas:uses('avena')-(w.merienda.includes('placa')?sv[w.merienda.indexOf('placa')]:0),
+    placa:w.merienda.includes('placa')?sv[w.merienda.indexOf('placa')]:0,pan:uses('pan'),cherry:uses('cherry'),comodinFruta:fc};
+}
 
 function pad(n){return String(n).padStart(2,'0');}
 function fmtDate(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
@@ -288,8 +382,12 @@ function ensureWeek(st,key,month,rng){
   if(!Array.isArray(w.horno)||!w.horno.length||w.horno.some(id=>!(id in HORNO_POOL)))w.horno=pickHorno(month,(prev&&prev.horno)||[],rng);
   if(w.aderezo==null)w.aderezo=pickIdx(ADEREZOS.length,prev&&prev.aderezo!=null?[prev.aderezo]:[],rng);
   if(w.condimento==null)w.condimento=pickIdx(CONDIMENTOS.length,prev&&prev.condimento!=null?[prev.condimento]:[],rng);
+  if(!Array.isArray(w.merienda)||w.merienda.length!==MER_N||w.merienda.some(id=>!MER[id])||new Set(w.merienda).size!==MER_N)
+    w.merienda=pickMerienda((prev&&prev.merienda)||[],rng);
+  if(!w.fruta||!FRUTAS[w.fruta])w.fruta=pickFruta(prev&&prev.fruta,rng,null);
   return w;
 }
+function clearMerChecks(w){Object.keys(w.checks).forEach(k=>{if(k.indexOf('c_m_')===0||k.indexOf('mp_')===0)delete w.checks[k];});}
 function reroll(st,key,month,slot,rng){
   const w=st.weeks[key],s=st.settings,prev=prevWeek(st,key);
   const all=slot==='all';
@@ -302,6 +400,10 @@ function reroll(st,key,month,slot,rng){
   if(slot==='aderezo'||all)w.aderezo=pickIdx(ADEREZOS.length,[w.aderezo].concat(prev&&prev.aderezo!=null?[prev.aderezo]:[]),rng);
   if(slot==='condimento'||all)w.condimento=pickIdx(CONDIMENTOS.length,[w.condimento].concat(prev&&prev.condimento!=null?[prev.condimento]:[]),rng);
   if(['green','salad','horno','all'].includes(slot))w.checks={};
+  const pm=(prev&&prev.merienda)||[];
+  if(slot==='merienda'||all){w.merienda=pickMerienda(pm.concat(w.merienda),rng);w.fruta=pickFruta(w.fruta,rng,w.fruta);clearMerChecks(w);}
+  if(/^mer[0-9]$/.test(slot)){w.merienda=rerollMerSlot(w.merienda,+slot.slice(3),pm,rng);clearMerChecks(w);}
+  if(slot==='fruta'){w.fruta=pickFruta(prev&&prev.fruta,rng,w.fruta);clearMerChecks(w);}
   return w;
 }
 function load(){
@@ -337,7 +439,8 @@ function steps(w,s){
   out.push({id:'p10',t:'Etiquetar con la fecha',d:'Así sabés cuándo se vence cada tupper.'});
   return out;
 }
-const api={VEG,GREENS,PLATOS,HORNO_POOL,HORNO_N,SALADS,ADEREZOS,CONDIMENTOS,MESES,MCORTO,DEFAULTS,prepSunday,fmtDate,fmtG,shares,buy,computePlan,pickGreen,pickHorno,pickSalad,pickIdx,recentGreens,ensureWeek,reroll,isFrozen,load,save,steps,STORE_KEY};
+const api={VEG,GREENS,PLATOS,HORNO_POOL,HORNO_N,SALADS,ADEREZOS,CONDIMENTOS,MESES,MCORTO,DEFAULTS,prepSunday,fmtDate,fmtG,shares,buy,computePlan,pickGreen,pickHorno,pickSalad,pickIdx,recentGreens,ensureWeek,reroll,isFrozen,load,save,steps,STORE_KEY,
+  MER,MER_IDS,MER_N,FRUTAS,FRUTA_IDS,MING,merOk,pickMerienda,rerollMerSlot,pickFruta,merServings,computeMerienda,clearMerChecks};
 if(typeof module!=='undefined')module.exports=api;
 return api;
 })();
@@ -345,7 +448,7 @@ return api;
 /* ---------- UI ---------- */
 (function(){
 if(typeof document==='undefined'||!document.getElementById('app'))return;
-const {VEG,GREENS,MESES,MCORTO,SALADS,ADEREZOS,CONDIMENTOS}=PV;
+const {VEG,GREENS,MESES,MCORTO,SALADS,ADEREZOS,CONDIMENTOS,MER,MER_IDS,FRUTAS,FRUTA_IDS}=PV;
 const app=document.getElementById('app');
 let st=PV.load();
 const ui={tab:'semana',offset:0};
@@ -366,7 +469,9 @@ function ctx(){
   const key=PV.fmtDate(d),month=d.getMonth();
   const w=PV.ensureWeek(st,key,month,Math.random);
   PV.save(st);
-  return{d,key,month,w,plan:PV.computePlan(st.settings,w,month)};
+  const plan=PV.computePlan(st.settings,w,month),mer=PV.computeMerienda(st.settings,w);
+  plan.items=plan.items.concat(mer.items);
+  return{d,key,month,w,plan,mer};
 }
 function header(c){
   const d0=PV.prepSunday(new Date(),0),d1=PV.prepSunday(new Date(),1);
@@ -407,20 +512,53 @@ function vSemana(c){
     '<div><b>¼ proteína</b>: ~90 g cocida, hecha en el momento</div>'+
     '<div><b>¼ hidrato</b>: ~40 g crudo, en <b>una sola</b> comida del día</div></div>';
 }
+function vMerienda(c){
+  const w=c.w,m=c.mer,done=w.checks,s=st.settings;
+  const tipoB=t=>t==='dulce'?'<span class="b b1">Dulce</span>':'<span class="b b2">Salada</span>';
+  const slots=w.merienda.map((id,i)=>{
+    const x=MER[id],n=m.sv[i];
+    const opts=MER_IDS.map(k=>'<option value="'+k+'"'+(k===id?' selected':'')+'>'+MER[k].nombre+'</option>').join('');
+    return '<div class="slot"><div><div class="sl">'+n+(n===1?' merienda':' meriendas')+'</div><div class="sn" style="font-size:20px">'+x.nombre+'</div>'+tipoB(x.tipo)+
+      '<div class="dd">'+x.como+'</div><select data-c="mer" data-i="'+i+'" aria-label="Elegir merienda">'+opts+'</select></div>'+dice('mer'+i)+'</div>';
+  }).join('');
+  const usaFruta=w.merienda.includes('yogur');
+  const fOpts=FRUTA_IDS.map(f=>'<option value="'+f+'"'+(f===w.fruta?' selected':'')+'>'+FRUTAS[f]+'</option>').join('');
+  const fruta=!usaFruta?'':'<div class="slot"><div><div class="sl">Fruta del yogur</div><div class="sn" style="font-size:20px">'+FRUTAS[w.fruta]+(w.fruta==='frutosrojos'?' (congelados)':'')+'</div>'+
+    '<div class="dd">Rota cada semana.</div>'+
+    '<select data-c="fruta" aria-label="Elegir fruta">'+fOpts+'</select></div>'+dice('fruta')+'</div>';
+  const pasos=[];
+  if(m.bolsitas>0)pasos.push({id:'mp_bolsitas',t:'Armar '+m.bolsitas+' bolsitas de avena',d:'2 cucharadas soperas en cada frasquito o bolsita. En la semana solo la volcás: no medís nada.'});
+  if(m.placa>0)pasos.push({id:'mp_placa',t:'Armar la placa de yogur helado',d:'Mezclar '+m.placa+(m.placa===1?' yogur':' yogures')+' con '+(m.placa*2)+' cdas de avena. Esparcir en una bandeja con papel manteca (~1 cm), frutos rojos arriba y al freezer 3–4 h. Partir en '+m.placa+' trozos y guardarlos en una bolsa en el freezer.'});
+  if(m.pan>0)pasos.push({id:'mp_pan',t:'Freezar el pan en rodajas',d:'Si no viene cortado, cortalo. Del freezer va directo a la tostadora.'});
+  if(m.cherry>0)pasos.push({id:'mp_cherry',t:'Lavar los tomates cherry',d:'Bien secos, en un tupper con papel absorbente: listos para agarrar.'});
+  pasos.push({id:'mp_queso',t:'Cortar el queso en porciones',d:'Una porción por día de fiaca. Así no picás del bloque.'});
+  pasos.push({id:'mp_fruta',t:'Lavar la fruta y dejarla a la vista',d:'Adelante en la heladera o en la mesada: lo que se ve primero es lo que se come.'});
+  const list=pasos.map(x=>'<label class="chk'+(done[x.id]?' done':'')+'"><input type="checkbox" data-c="chk" data-id="'+x.id+'"'+(done[x.id]?' checked':'')+'><div><div class="t">'+x.t+'</div><div class="d">'+x.d+'</div></div></label>').join('');
+  return '<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:4px"><h2 style="margin:0">Merienda de la semana</h2><button class="btn pri" data-a="reroll" data-v="merienda">Sortear</button></div>'+
+    '<div class="muted">Todo sin cocinar. '+s.merDias*s.personas+' meriendas repartidas entre las 3.</div>'+slots+fruta+'</div>'+
+    '<div class="card"><h2>Comodín para los días de fiaca</h2><div><b>Queso en porción + '+(m.comodinFruta==='manzana'?'manzana verde':'pera')+'</b></div>'+
+    '<div class="dd" style="margin-top:4px">Le falta el hidrato que pide Luli: si podés, sumale una tostada. Mejor esto que saltearla.</div></div>'+
+    '<div class="card"><h2>Domingo, 10 minutos</h2><div class="muted" style="margin-bottom:6px">Nada de hornallas: solo dejar todo listo para agarrar.</div>'+list+'</div>'+
+    '<div class="card"><h2>Para tener en cuenta</h2>'+
+    '<div>• <b>Sin azúcar:</b> yogur natural y hummus, siempre mirando la etiqueta.</div>'+
+    '<div>• <b>Pan, quesos, ricota y hummus:</b> tu lista de candidiasis no los prohíbe ni los incluye. Van en poca cantidad; consultalo con tu médica.</div>'+
+    '<div>• Las compras de la merienda están en <b>Comprar</b>, junto con las verduras.</div></div>';
+}
 function vComprar(c){
   const p=c.plan,done=c.w.checks;
-  const groups=[['horno','Para el horno'],['ensalada','Ensalada'],['verde','Verde de la semana']];
+  const groups=[['horno','Para el horno'],['ensalada','Ensalada'],['verde','Verde de la semana'],['merienda','Merienda'],['merienda-d','Merienda · revisá si tenés']];
   const n=p.items.filter(i=>done['c_'+i.id]).length;
   let html='<div class="card"><div class="row" style="justify-content:space-between"><h2 style="margin:0">Lista de compras</h2><span class="muted">'+n+' de '+p.items.length+'</span></div>'+
-    '<div class="muted" style="margin:4px 0 10px">Total aprox. '+PV.fmtG(p.compraG)+', redondeado para que no sobre de más.</div>';
+    '<div class="muted" style="margin:4px 0 10px">Verduras: total aprox. '+PV.fmtG(p.compraG)+', redondeado para que no sobre de más.</div>';
   groups.forEach(gr=>{
     const its=p.items.filter(i=>i.grupo===gr[0]);
     if(!its.length)return;
     html+='<div class="grp">'+gr[1]+'</div>';
     its.forEach(i=>{
-      const parts=i.parts.map(x=>x[0]+' '+PV.fmtG(x[1])).join(' + ');
+      const parts=i.det!=null?i.det:i.parts.map(x=>x[0]+' '+PV.fmtG(x[1])).join(' + ');
+      const desc=[(i.congelado||i.temp==null?'':badge(i.temp)+' ')+parts,i.nota].filter(Boolean).join(' · ');
       html+='<label class="chk'+(done['c_'+i.id]?' done':'')+'"><input type="checkbox" data-c="chk" data-id="c_'+i.id+'"'+(done['c_'+i.id]?' checked':'')+'>'+
-      '<div><div class="t">'+i.nombre+'</div><div class="d">'+(i.congelado?'':badge(i.temp)+' ')+parts+(i.nota?' · '+i.nota:'')+'</div></div>'+
+      '<div><div class="t">'+i.nombre+'</div><div class="d">'+desc+'</div></div>'+
       '<div class="q">'+i.texto+(i.aprox?'<div class="d" style="font-weight:400">'+i.aprox+'</div>':'')+'</div></label>';
     });
   });
@@ -453,6 +591,8 @@ function vAjustes(){
     '<div class="card"><h2>Armado de los platos</h2><div class="muted">De las '+N+' comidas de la semana, cuántas son de cada tipo. Si un plato lleva dos o tres tuppers, la verdura se reparte en partes iguales.</div>'+
     PV.PLATOS.map(x=>fld(x.nombre,'platos.'+x.id,pl[x.id],0,99)).join('')+
     (sum!==N?'<div class="warn">Sumaste '+sum+' de '+N+' comidas: la app mantiene la proporción y la ajusta a '+N+'.</div>':'')+'</div>'+
+    '<div class="card"><h2>Merienda</h2>'+fld('Meriendas por semana (días)','merDias',s.merDias,1,7)+
+    '<div class="muted">Se reparten entre las 3 meriendas de la semana; también se multiplica por personas.</div></div>'+
     '<div class="card"><h2>Verde</h2>'+
     '<div class="fld"><div>Formato por defecto</div><select data-c="fmt"><option value="congelado"'+(s.verdeFormato==='congelado'?' selected':'')+'>Congelado</option><option value="fresco"'+(s.verdeFormato==='fresco'?' selected':'')+'>Fresco</option></select></div>'+
     fld('Tamaño de bolsa congelada (g)','bolsaG',s.bolsaG,200,1000,50)+
@@ -462,13 +602,16 @@ function vAjustes(){
 }
 function render(){
   const c=ctx();
-  const views={semana:vSemana,comprar:vComprar,prep:vPrep,ajustes:vAjustes};
-  const tabs=[['semana','🥬','Semana'],['comprar','🛒','Comprar'],['prep','🔪','Prep'],['ajustes','⚙️','Ajustes']];
+  const views={semana:vSemana,merienda:vMerienda,comprar:vComprar,prep:vPrep,ajustes:vAjustes};
+  const tabs=[['semana','🥬','Semana'],['merienda','🍐','Merienda'],['comprar','🛒','Comprar'],['prep','🔪','Prep'],['ajustes','⚙️','Ajustes']];
   app.innerHTML=header(c)+views[ui.tab](c)+
     '<nav><div class="in">'+tabs.map(t=>'<button data-a="tab" data-v="'+t[0]+'" class="'+(ui.tab===t[0]?'on':'')+'"><span class="ic">'+t[1]+'</span>'+t[2]+'</button>').join('')+'</div></nav>';
 }
 function listText(c){
-  return 'Compras para el '+lab(c.d)+':\n'+c.plan.items.map(i=>'- '+i.nombre+': '+i.texto+(i.aprox?' ('+i.aprox+')':'')).join('\n');
+  const ln=i=>'- '+i.nombre+': '+i.texto+(i.aprox?' ('+i.aprox+')':'');
+  const veg=c.plan.items.filter(i=>i.grupo.indexOf('merienda')!==0),me=c.plan.items.filter(i=>i.grupo==='merienda'),md=c.plan.items.filter(i=>i.grupo==='merienda-d');
+  return 'Compras para el '+lab(c.d)+':\n'+veg.map(ln).join('\n')+
+    (me.length?'\n\nMerienda:\n'+me.map(ln).join('\n'):'')+(md.length?'\n\nRevisar si hay:\n'+md.map(ln).join('\n'):'');
 }
 app.addEventListener('click',e=>{
   const t=e.target.closest('[data-a]');if(!t)return;
@@ -496,12 +639,18 @@ app.addEventListener('change',e=>{
     c.w.checks={};PV.save(st);
   }
   else if(k==='salad'){c.w.salad=t.value;c.w.checks={};PV.save(st);}
+  else if(k==='mer'){
+    const i=+t.dataset.i,m=c.w.merienda.slice(),j=m.indexOf(t.value);
+    if(j>=0&&j!==i)m[j]=m[i];
+    m[i]=t.value;c.w.merienda=m;PV.clearMerChecks(c.w);PV.save(st);
+  }
+  else if(k==='fruta'){c.w.fruta=t.value;PV.clearMerChecks(c.w);PV.save(st);}
   else if(k==='fmt'){st.settings.verdeFormato=t.value;PV.save(st);}
   else if(k==='fuera'){st.settings.fuera=t.checked;PV.save(st);}
   else if(k==='set'){
     const key=t.dataset.k;let v=parseFloat(t.value);
     const isP=key.indexOf('platos.')===0,pid=key.split('.')[1];
-    const lim=isP?[0,99]:{personas:[1,6],comidas:[1,3],dias:[1,7],gPlato:[100,400],bolsaG:[200,1000]}[key];
+    const lim=isP?[0,99]:{personas:[1,6],comidas:[1,3],dias:[1,7],gPlato:[100,400],bolsaG:[200,1000],merDias:[1,7]}[key];
     if(isNaN(v))v=isP?st.settings.platos[pid]:st.settings[key];
     v=Math.min(lim[1],Math.max(lim[0],Math.round(v)));
     if(isP)st.settings.platos[pid]=v;else st.settings[key]=v;
